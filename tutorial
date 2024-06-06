@@ -1,0 +1,135 @@
+package com.example.myapplication
+
+import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+    }
+    import android.location.Location;
+    import android.os.Bundle;
+    import androidx.annotation.NonNull;
+    import androidx.appcompat.app.AppCompatActivity;
+    import com.mapbox.android.core.location.LocationEngine;
+    import com.mapbox.android.core.location.LocationEngineProvider;
+    import com.mapbox.android.core.location.LocationEngineRequest;
+    import com.mapbox.android.core.location.LocationListener;
+    import com.mapbox.mapboxsdk.Mapbox;
+    import com.mapbox.mapboxsdk.maps.MapView;
+    import com.mapbox.mapboxsdk.maps.MapboxMap;
+    import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+    import com.mapbox.mapboxsdk.geometry.LatLng;
+    import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
+    import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
+
+    public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+        private MapView mapView;
+        private MapboxMap mapboxMap;
+        private LocationEngine locationEngine;
+        private LocationListener locationListener;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            Mapbox.getInstance(this, "YOUR_MAPBOX_ACCESS_TOKEN");
+            setContentView(R.layout.activity_main);
+
+            mapView = findViewById(R.id.mapView);
+            mapView.onCreate(savedInstanceState);
+            mapView.getMapAsync(this);
+        }
+
+        @Override
+        public void onMapReady(@NonNull MapboxMap mapboxMap) {
+            this.mapboxMap = mapboxMap;
+            enableLocation();
+        }
+
+        private void enableLocation() {
+            locationEngine = LocationEngineProvider.getBestLocationEngine(this);
+            LocationEngineRequest request = new LocationEngineRequest.Builder(1000)
+                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                .build();
+
+            locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    if (location != null) {
+                        // Adiciona uma marcação no mapa com base na localização do GPS
+                        addMarker(new LatLng(location.getLatitude(), location.getLongitude()));
+                    }
+                }
+            };
+
+            locationEngine.requestLocationUpdates(request, locationListener, getMainLooper());
+        }
+
+        private void addMarker(LatLng latLng) {
+            SymbolManager symbolManager = new SymbolManager(mapView, mapboxMap, null);
+            symbolManager.setIconAllowOverlap(true);
+
+            SymbolOptions symbolOptions = new SymbolOptions()
+                .withLatLng(latLng)
+                .withIconImage("marker-icon")
+                .withIconSize(1.3f);
+
+            symbolManager.create(symbolOptions);
+        }
+
+        @Override
+        protected void onStart() {
+            super.onStart();
+            mapView.onStart();
+        }
+
+        @Override
+        protected void onResume() {
+            super.onResume();
+            mapView.onResume();
+        }
+
+        @Override
+        protected void onPause() {
+            super.onPause();
+            mapView.onPause();
+        }
+
+        @Override
+        protected void onStop() {
+            super.onStop();
+            mapView.onStop();
+            if (locationEngine != null) {
+                locationEngine.removeLocationUpdates(locationListener);
+            }
+        }
+
+        @Override
+        protected void onSaveInstanceState(@NonNull Bundle outState) {
+            super.onSaveInstanceState(outState);
+            mapView.onSaveInstanceState(outState);
+        }
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            mapView.onDestroy();
+        }
+
+        @Override
+        public void onLowMemory() {
+            super.onLowMemory();
+            mapView.onLowMemory();
+        }
+    }
